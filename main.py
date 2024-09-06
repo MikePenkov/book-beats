@@ -40,12 +40,6 @@ def callback():
     else:
         return "<h1>Error: No code found in the callback URL</h1>", 400
 
-# def shutdown_server():
-#     func = request.environ.get('werkzeug.server.shutdown')
-#     if func is None:
-#         raise RuntimeError('Not running with the Werkzeug Server')
-#     func()
-
 if __name__ == '__main__':
     global server
     threading.Thread(target=run_app).start()  # Run Flask app in a separate thread
