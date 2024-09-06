@@ -1,12 +1,12 @@
-from flask import Flask, request, redirect, jsonify
+import base64
+import os
 import threading
 import webbrowser
-from dotenv import load_dotenv
-import os
 from multiprocessing import Process
-import base64
-from urllib.parse import urlencode
+
 import requests
+from dotenv import load_dotenv
+from flask import Flask, request, redirect
 
 load_dotenv()
 
@@ -18,7 +18,7 @@ REDIRECT_URI = 'http://localhost:5000/callback'
 
 # todo fix the spotify scopes when I know them!
 AUTHORIZE_URL = (f'https://accounts.spotify.com/authorize?client_id={CLIENT_ID}'
-                 f'&scope=playlist-modify-public,playlist-modify-private'
+                 f'&scope=playlist-modify-public,playlist-modify-private,user-read-private,user-read-email'
                  f'&response_type=code'
                  f'&redirect_uri={REDIRECT_URI}')
 
@@ -86,7 +86,20 @@ if __name__ == '__main__':
     print(all_text['access_token'])
     access_token = all_text['access_token']
 
-    # TODO: Get the user id before requesting to create playlist
+    # Get the user id before requesting to create playlist
+    url = 'https://api.spotify.com/v1/me'
+    headers = {
+        f'Authorization': f'Bearer {access_token}'
+    }
+
+    response = requests.get(url, headers=headers)
+
+    # To check the response
+    print("User ID response:\n")
+    print(response.status_code)
+    print(response.json())
+    user_id = response.json()['id']
+    print(user_id)
 
     # STEP X send a post request to create a playlist
     url = f'https://api.spotify.com/v1/users/{user_id}/playlists'
