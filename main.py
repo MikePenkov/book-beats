@@ -1,9 +1,12 @@
-from flask import Flask, request, redirect
+from flask import Flask, request, redirect, jsonify
 import threading
 import webbrowser
 from dotenv import load_dotenv
 import os
 from multiprocessing import Process
+import base64
+from urllib.parse import urlencode
+import requests
 
 load_dotenv()
 
@@ -15,6 +18,7 @@ REDIRECT_URI = 'http://localhost:5000/callback'
 
 # todo fix the spotify scopes when I know them!
 AUTHORIZE_URL = (f'https://accounts.spotify.com/authorize?client_id={CLIENT_ID}'
+                 f'&scope=playlist-modify-public,playlist-modify-private'
                  f'&response_type=code'
                  f'&redirect_uri={REDIRECT_URI}')
 
@@ -35,13 +39,11 @@ def callback():
     global received_code
     received_code = request.args.get('code')
     if received_code:
-      #  shutdown_server()  # Shut down the server after receiving the code
         return f"<h1>Authorization Code:</h1><code>{received_code}</code>"
     else:
         return "<h1>Error: No code found in the callback URL</h1>", 400
 
 if __name__ == '__main__':
-    global server
     threading.Thread(target=run_app).start()  # Run Flask app in a separate thread
     server = Process(target=run_app)
     server.start()
@@ -52,6 +54,40 @@ if __name__ == '__main__':
 
     server.terminate()
     server.join()
+    print("\n\n\n")
     print(f"Received authorization code: {received_code}")
-    user_input = input("Please enter something to continue: ")
-    print(f"You entered: {user_input}")
+    print("\n\n\n")
+
+    my_base64_stuff = base64.b64encode(f"{CLIENT_ID}:{CLIENT_SECRET}".encode()).decode()
+
+    # Prepare the POST request to get the access token
+    auth_options = {
+        'url': 'https://accounts.spotify.com/api/token',
+        'data': {
+            'code': received_code,
+            'redirect_uri': REDIRECT_URI,
+            'grant_type': 'authorization_code'
+        },
+        'headers': {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Authorization': 'Basic ' + my_base64_stuff
+        }
+    }
+
+    # Make the POST request
+    response = requests.post(auth_options['url'], data=auth_options['data'], headers=auth_options['headers'])
+    
+    # Assuming you want to handle the JSON response in some way
+    print(response.json())
+    all_text = response.json()
+
+    print("\n\n\n")
+
+    print(all_text['access_token'])
+
+    # STEP X send a post request to create a playlist
+
+    print("\n\n\n")
+    print("YAY YOU GUYZ ARE THE BESTEST!!!!")
+    # i_got = jsonify(response.json())
+    # print(i_got)
