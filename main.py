@@ -8,9 +8,15 @@ load_dotenv()
 
 app = Flask(__name__)
 
-CLIENT_ID = 'YOUR_CLIENT_ID'
+CLIENT_ID = os.getenv('CLIENT_ID')
+CLIENT_SECRET = os.getenv('CLIENT_SECRET')
 REDIRECT_URI = 'http://localhost:5000/callback'
-AUTHORIZE_URL = f"https://your-okta-domain.okta.com/oauth2/default/v1/authorize?client_id={CLIENT_ID}&response_type=code&scope=openid&redirect_uri={REDIRECT_URI}&state=1234"
+
+# todo fix the spotify scopes when I know them!
+AUTHORIZE_URL = f"https://accounts.spotify.com/authorize?client_id={CLIENT_ID}" \
+"&response_type=code" \
+"&scope=openid" \
+"&redirect_uri={REDIRECT_URI}"
 
 received_code = None
 
