@@ -84,8 +84,27 @@ if __name__ == '__main__':
     print("\n\n\n")
 
     print(all_text['access_token'])
+    access_token = all_text['access_token']
+
+    # TODO: Get the user id before requesting to create playlist
 
     # STEP X send a post request to create a playlist
+    url = f'https://api.spotify.com/v1/users/{user_id}/playlists'
+    headers = {
+        'Authorization': f'Bearer {access_token}',
+        'Content-Type': 'application/json'
+    }
+    data = {
+        "name": "New Playlist",
+        "description": "New playlist description",
+        "public": False
+    }
+
+    response = requests.post(url, headers=headers, json=data)
+
+    # To check the response
+    print(response.status_code)
+    print(response.json())
 
     print("\n\n\n")
     print("YAY YOU GUYZ ARE THE BESTEST!!!!")
