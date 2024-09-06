@@ -2,12 +2,14 @@ import base64
 import os
 import threading
 import webbrowser
+from openai import OpenAI
 from multiprocessing import Process
 
 import requests
 from dotenv import load_dotenv
 from flask import Flask, request, redirect
 import json
+from prompts import system_message, generate_prompt
 
 load_dotenv()
 
@@ -16,6 +18,7 @@ app = Flask(__name__)
 CLIENT_ID = os.getenv('CLIENT_ID')
 CLIENT_SECRET = os.getenv('CLIENT_SECRET')
 REDIRECT_URI = 'http://localhost:5000/callback'
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 # todo fix the spotify scopes when I know them!
 AUTHORIZE_URL = (f'https://accounts.spotify.com/authorize?client_id={CLIENT_ID}'
@@ -39,6 +42,28 @@ def pretty_print_json(json_object):
     print("\n")
     print(json.dumps(json_object, indent=4, sort_keys=True))
     print("\n")
+
+def get_song_suggestions(vibe: str) -> [str]:
+    client = OpenAI(api_key=OPENAI_API_KEY)
+    completion = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {
+                "role": "system",
+                "content": system_message
+            },
+            {
+                "role": "user",
+                "content": generate_prompt(vibe)
+            }
+        ]
+    )
+
+    print(completion.choices[0].message)
+    return []
+    
+
+
 
 @app.route('/')
 def index():
@@ -126,20 +151,28 @@ if __name__ == '__main__':
     pretty_print_json(response.json())
     playlist_id = response.json()['id']
 
+    print("time to OpenAI")
+
+    # Step 5: Get song suggestions from OpenAI
+    openai_songs = get_song_suggestions(vibe="Harry Potter and the Deathly Hallows. Dark and eerie atmosphere")
+
+    print("I GOT TO HERE!!!")
 
 
-    # Step 5: Search for a tracks based on song names
-    hardcoded_songs = [
-        "Night on Bald Mountain",
-        "In the Hall of the Mountain King",
-        "Gnossienne No. 1",
-        "Danse Macabre",
-        "Lacrimosa"
-    ]
+
+
+    # Step 6: Search for a tracks based on song names
+    # hardcoded_songs = [
+    #     "Night on Bald Mountain",
+    #     "In the Hall of the Mountain King",
+    #     "Gnossienne No. 1",
+    #     "Danse Macabre",
+    #     "Lacrimosa"
+    # ]
 
     track_ids = []
 
-    for i in hardcoded_songs:
+    for i in openai_songs:
         url = f'https://api.spotify.com/v1/search?q={i}&type=track&limit=1'
         response = requests.get(url, headers=get_standard_headers(access_token))
         # pretty_print_json(response.json())
@@ -148,7 +181,7 @@ if __name__ == '__main__':
     
 
 
-    # Step 6: Add tracks to playlist
+    # Step 7: Add tracks to playlist
     url = f'https://api.spotify.com/v1/playlists/{playlist_id}/tracks'
     data = {
         "uris": [f'spotify:track:{i}' for i in track_ids]
@@ -164,5 +197,6 @@ if __name__ == '__main__':
 
     print("\n\n\n")
     print("YAY YOU GUYZ ARE THE BESTEST!!!!")
+    sys.exit(0)
     # i_got = jsonify(response.json())
     # print(i_got)
