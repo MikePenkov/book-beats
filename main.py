@@ -13,10 +13,7 @@ CLIENT_SECRET = os.getenv('CLIENT_SECRET')
 REDIRECT_URI = 'http://localhost:5000/callback'
 
 # todo fix the spotify scopes when I know them!
-AUTHORIZE_URL = f"https://accounts.spotify.com/authorize?client_id={CLIENT_ID}" \
-"&response_type=code" \
-"&scope=openid" \
-"&redirect_uri={REDIRECT_URI}"
+AUTHORIZE_URL = f'https://accounts.spotify.com/authorize?client_id={CLIENT_ID}&response_type=code&redirect_uri={REDIRECT_URI}'
 
 received_code = None
 
@@ -25,7 +22,9 @@ def run_app():
 
 @app.route('/')
 def index():
-    return redirect(AUTHORIZE_URL, code=302)
+#    return AUTHORIZE_URL 
+  return f"<a href='{AUTHORIZE_URL}'>Authorize</a>" 
+ #  return redirect(AUTHORIZE_URL, code=302)
 
 @app.route('/callback')
 def callback():
