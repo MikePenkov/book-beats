@@ -20,3 +20,8 @@ OPENAI_API_KEY=...
 You will need to create a Spotify Web API app in [Spotify Account Dashboard](https://developer.spotify.com/dashboard). From There you can get the values for **CLIENT_ID** and **CLIENT_SECRET**
 
 You can get an **OPENAI_API_KEY** from [OpenAI Platform](https://platform.openai.com/api-keys)
+
+## To Run the app
+```
+python main.py
+```
