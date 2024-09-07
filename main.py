@@ -3,13 +3,15 @@ import os
 import threading
 import webbrowser
 from openai import OpenAI
-from multiprocessing import Process
+from multiprocessing import Process, Manager
 
 import requests
 from dotenv import load_dotenv
 from flask import Flask, request, redirect
 import json
 from prompts import system_message, generate_prompt
+import sys
+import time
 
 load_dotenv()
 
@@ -26,9 +28,9 @@ AUTHORIZE_URL = (f'https://accounts.spotify.com/authorize?client_id={CLIENT_ID}'
                  f'&response_type=code'
                  f'&redirect_uri={REDIRECT_URI}')
 
-received_code = None
-
-def run_app():
+def run_app(shared_list):
+    global shared_list_glob 
+    shared_list_glob = shared_list
     app.run(port=5000, use_reloader=False)
 
 
@@ -59,8 +61,19 @@ def get_song_suggestions(vibe: str) -> [str]:
         ]
     )
 
+    print("\n\n\n")
     print(completion.choices[0].message)
-    return []
+    content = completion.choices[0].message.content
+    print("\n\n\n")
+    print("make it pretty")
+    pretty_print_json(json.loads(content))
+    items = json.loads(content)["items"]
+
+    print("\n\n\n OpenAi Songs:\n")
+    for i in items:
+        print(i["song"] + " by " + i["artist"])
+
+    return items
     
 
 
@@ -74,25 +87,55 @@ def index():
 
 @app.route('/callback')
 def callback():
-    global received_code
+    print("callback endpoint hit!\n")
+    
     received_code = request.args.get('code')
     if received_code:
+        global shared_list_glob
+        shared_list_glob.append(received_code)
         return f"<h1>Authorization Code:</h1><code>{received_code}</code>"
     else:
         return "<h1>Error: No code found in the callback URL</h1>", 400
 
 if __name__ == '__main__':
     # Step 1: Get the authorization code
-    threading.Thread(target=run_app).start()  # Run Flask app in a separate thread
-    server = Process(target=run_app)
-    server.start()
-    webbrowser.open('http://localhost:5000/')
+    # threading.Thread(target=run_app).start()  # Run Flask app in a separate thread
 
-    while received_code is None:
-        pass  # Wait until the authorization code is received
 
+    received_code = None
+    with Manager() as manager:
+        shared_list = manager.list()
+        server = Process(target=run_app, args=(shared_list,))
+
+        print("Starting flask server\n")
+        server.start()
+        print("Flask server started\n")
+
+        # this is a specific thing for WSL to open the browser automatically
+        webbrowser.get("wslview %s").open("http://localhost:5000/")
+        # You should probably just use
+        # webbrowser.open("http://localhost:5000/")
+
+    # while received_code is None:
+    #     time.sleep(1)
+    #     pass  # Wait until the authorization code is received
+
+        while len(shared_list) == 0:
+            print("waiting for code")
+            time.sleep(1)
+        
+        server.terminate()
+        server.join()
+
+        received_code = shared_list[0]
+        print("I GOT IT", received_code)
+
+        
+
+    print("Shutting down flask server\n")
     server.terminate()
     server.join()
+    print("Flask server terminated\n")
     print("\n\n\n")
     print(f"Received authorization code: {received_code}")
     print("\n\n\n")
@@ -151,31 +194,23 @@ if __name__ == '__main__':
     pretty_print_json(response.json())
     playlist_id = response.json()['id']
 
-    print("time to OpenAI")
+    print("time to OpenAI\n")
 
     # Step 5: Get song suggestions from OpenAI
     openai_songs = get_song_suggestions(vibe="Harry Potter and the Deathly Hallows. Dark and eerie atmosphere")
 
-    print("I GOT TO HERE!!!")
 
-
-
-
-    # Step 6: Search for a tracks based on song names
-    # hardcoded_songs = [
-    #     "Night on Bald Mountain",
-    #     "In the Hall of the Mountain King",
-    #     "Gnossienne No. 1",
-    #     "Danse Macabre",
-    #     "Lacrimosa"
-    # ]
-
+    # Step 6: Search for a tracks based on song names and artists
+    print("\nStep 6: Search for a tracks based on song names and artists\n")
     track_ids = []
 
     for i in openai_songs:
-        url = f'https://api.spotify.com/v1/search?q={i}&type=track&limit=1'
+        name = i["song"]
+        artist = i["artist"]
+        url = f'https://api.spotify.com/v1/search?q=track:{name} artist:{artist}&type=track,artist&limit=1'
         response = requests.get(url, headers=get_standard_headers(access_token))
-        # pretty_print_json(response.json())
+        if response.json()['tracks']['items'] == []:
+            continue # Skip the track if nothing was returned by spotify
         track_id = response.json()['tracks']['items'][0]['id']
         track_ids.append(track_id)
     
