@@ -12,8 +12,11 @@ import json
 from prompts import system_message, generate_prompt
 import sys
 import time
+from banner import print_banner_text
+import logging
 
 load_dotenv()
+logging.basicConfig(level=logging.INFO)
 
 app = Flask(__name__)
 
@@ -41,9 +44,9 @@ def get_standard_headers(access_token):
     }
 
 def pretty_print_json(json_object):
-    print("\n")
-    print(json.dumps(json_object, indent=4, sort_keys=True))
-    print("\n")
+    logging.debug("\n")
+    logging.debug(json.dumps(json_object, indent=4, sort_keys=True))
+    logging.debug("\n")
 
 def get_song_suggestions(vibe: str) -> [str]:
     client = OpenAI(api_key=OPENAI_API_KEY)
@@ -61,17 +64,16 @@ def get_song_suggestions(vibe: str) -> [str]:
         ]
     )
 
-    print("\n\n\n")
-    print(completion.choices[0].message)
+    logging.debug("\n\n\n")
+    logging.debug(completion.choices[0].message)
     content = completion.choices[0].message.content
-    print("\n\n\n")
-    print("make it pretty")
+    logging.debug("\n\n\n")
     pretty_print_json(json.loads(content))
     items = json.loads(content)["items"]
 
-    print("\n\n\n OpenAi Songs:\n")
+    logging.debug("\n\n\n OpenAi Songs:\n")
     for i in items:
-        print(i["song"] + " by " + i["artist"])
+        logging.debug(i["song"] + " by " + i["artist"])
 
     return items
     
@@ -80,14 +82,11 @@ def get_song_suggestions(vibe: str) -> [str]:
 
 @app.route('/')
 def index():
-
-#    return AUTHORIZE_URL 
-  #return f"<a href='{AUTHORIZE_URL}'>Authorize</a>" 
   return redirect(AUTHORIZE_URL, code=302)
 
 @app.route('/callback')
 def callback():
-    print("callback endpoint hit!\n")
+    logging.debug("callback endpoint hit!\n")
     
     received_code = request.args.get('code')
     if received_code:
@@ -98,49 +97,51 @@ def callback():
         return "<h1>Error: No code found in the callback URL</h1>", 400
 
 if __name__ == '__main__':
+
+    print_banner_text()
+    # Step 0: vibe check
+    logging.debug("Step 0: ask for a vibe check\n")
+    vibe = input("What kind of atmoshpere are you looking for?\n")
+
+
     # Step 1: Get the authorization code
-    # threading.Thread(target=run_app).start()  # Run Flask app in a separate thread
-
-
+    logging.debug("Step 1: get the authorization code\n")
     received_code = None
     with Manager() as manager:
         shared_list = manager.list()
         server = Process(target=run_app, args=(shared_list,))
 
-        print("Starting flask server\n")
+        logging.debug("Starting flask server\n")
         server.start()
-        print("Flask server started\n")
+        logging.debug("Flask server started\n")
 
         # this is a specific thing for WSL to open the browser automatically
         webbrowser.get("wslview %s").open("http://localhost:5000/")
         # You should probably just use
         # webbrowser.open("http://localhost:5000/")
 
-    # while received_code is None:
-    #     time.sleep(1)
-    #     pass  # Wait until the authorization code is received
-
         while len(shared_list) == 0:
-            print("waiting for code")
+            logging.debug("waiting for code")
             time.sleep(1)
         
         server.terminate()
         server.join()
 
         received_code = shared_list[0]
-        print("I GOT IT", received_code)
+        logging.debug("I GOT IT", received_code)
 
         
 
-    print("Shutting down flask server\n")
+    logging.debug("Shutting down flask server\n")
     server.terminate()
     server.join()
-    print("Flask server terminated\n")
-    print("\n\n\n")
-    print(f"Received authorization code: {received_code}")
-    print("\n\n\n")
+    logging.debug("Flask server terminated\n")
+    logging.debug("\n\n\n")
+    logging.debug(f"Received authorization code: {received_code}")
+    logging.debug("\n\n\n")
 
     # Step 2: Get the access token
+    logging.debug("Step 2: get the access token\n")
     my_base64_stuff = base64.b64encode(f"{CLIENT_ID}:{CLIENT_SECRET}".encode()).decode()
 
     # Prepare the POST request to get the access token
@@ -164,23 +165,25 @@ if __name__ == '__main__':
     pretty_print_json(response.json())
     all_text = response.json()
 
-    print("\n\n\n")
+    logging.debug("\n\n\n")
 
-    print(all_text['access_token'])
+    logging.debug(all_text['access_token'])
     access_token = all_text['access_token']
 
     # Step 3: Get the user id before requesting to create playlist
+    logging.debug("Step 3: get the user id\n")
     url = 'https://api.spotify.com/v1/me'
 
     response = requests.get(url, headers=get_standard_headers(access_token))
 
     # To check the response
-    print("User ID response:\n")
+    logging.debug("User ID response:\n")
     pretty_print_json(response.json())
     user_id = response.json()['id']
-    print(user_id)
+    logging.debug(user_id)
 
     # STEP 4: send a post request to create a playlist
+    logging.debug("Step 4: send a post request to create a playlist\n")
     url = f'https://api.spotify.com/v1/users/{user_id}/playlists'
     data = {
         "name": "Book-Beats Playlist",
@@ -194,14 +197,15 @@ if __name__ == '__main__':
     pretty_print_json(response.json())
     playlist_id = response.json()['id']
 
-    print("time to OpenAI\n")
+    logging.debug("time to OpenAI\n")
 
     # Step 5: Get song suggestions from OpenAI
-    openai_songs = get_song_suggestions(vibe="Harry Potter and the Deathly Hallows. Dark and eerie atmosphere")
+    logging.debug("Step 5: Get song suggestions from OpenAI\n")
+    openai_songs = get_song_suggestions(vibe)
 
 
     # Step 6: Search for a tracks based on song names and artists
-    print("\nStep 6: Search for a tracks based on song names and artists\n")
+    logging.debug("Step 6: Search for a tracks based on song names and artists\n")
     track_ids = []
 
     for i in openai_songs:
@@ -217,6 +221,7 @@ if __name__ == '__main__':
 
 
     # Step 7: Add tracks to playlist
+    logging.debug("Step 7: Add tracks to playlist\n")
     url = f'https://api.spotify.com/v1/playlists/{playlist_id}/tracks'
     data = {
         "uris": [f'spotify:track:{i}' for i in track_ids]
@@ -226,12 +231,6 @@ if __name__ == '__main__':
     pretty_print_json(response.json())
 
 
-    print("\n\n\n")
-    print ("ALL DONE! Check your spotify account for the playlist you just made!")
+    logging.debug("\n\n\n")
+    logging.info("ALL DONE! Check your spotify account for the playlist you just made!")
 
-
-    print("\n\n\n")
-    print("YAY YOU GUYZ ARE THE BESTEST!!!!")
-    sys.exit(0)
-    # i_got = jsonify(response.json())
-    # print(i_got)
