@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} · Book Beats{% endblock %}
+{% block content %}
+<section class="message {{ kind }}"><div class="message-orb">{% if kind == 'success' %}✓{% else %}!{% endif %}</div><div class="eyebrow">BOOK BEATS / {{ kind|upper }}</div><h1>{{ title }}</h1><p class="lede">{{ message }}</p>{% if playlist_url %}<a class="big-link" href="{{ playlist_url }}" target="_blank" rel="noreferrer">{{ t('open_playlist') }}</a>{% endif %}<a class="quiet-link" href="{{ url_for('index') }}">{{ t('again') }}</a></section>
+{% endblock %}
