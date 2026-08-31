@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Book Beats · {{ t('tagline') }}{% endblock %}
+{% block content %}
+<section class="hero">
+  <div class="eyebrow">READING SOUNDTRACKS / 01</div>
+  <h1>{{ t('hero_before') }}<span>{{ t('accent') }}</span>{{ t('hero_after') }}</h1>
+  <p class="lede">{{ t('intro') }}</p><div class="vinyl" aria-hidden="true"><b>BOOK<br>BEATS</b></div>
+</section>
+<section class="workbench">
+  <form action="{{ url_for('authorize') }}" method="post" class="form-card" data-persist-draft>
+    <div class="section-mark">{{ t('book_section') }}</div>
+    <label>{{ t('book_title') }}<input name="book_title" maxlength="180" required placeholder="{{ t('book_placeholder') }}"></label>
+    <label>{{ t('song_count') }} <output id="count-output">5</output><input id="song-count" name="song_count" type="range" min="1" max="20" value="5" oninput="document.getElementById('count-output').value=this.value"></label>
+    <label><input name="auto_song_count" type="checkbox" value="1" data-auto-count style="width:auto;margin-right:9px">{{ t('auto_song_count') }}</label>
+    <div class="section-mark">{{ t('spotify_section') }}</div>
+    <div class="field-pair"><label>Client ID<input name="spotify_client_id" required autocomplete="off" placeholder="Spotify App Client ID"></label><label>Client Secret<input name="spotify_client_secret" type="password" required autocomplete="new-password" placeholder="Spotify App Client Secret"></label></div>
+    <div class="section-mark">{{ t('model_section') }}</div>
+    <label>{{ t('provider') }}<select name="provider" data-provider><option value="openai">{{ t('openai') }}</option><option value="deepseek">{{ t('deepseek') }}</option><option value="compatible">{{ t('compatible') }}</option></select></label>
+    <div class="field-pair"><label>{{ t('model_name') }}<input name="model_name" required value="gpt-4o-mini" placeholder="gpt-4o-mini"></label><label>{{ t('api_url') }}<input name="base_url" required value="https://api.openai.com/v1" placeholder="https://api.openai.com/v1"></label></div>
+    <label>{{ t('api_key') }}<input name="model_api_key" type="password" required autocomplete="new-password" placeholder="API key"></label>
+    <p class="hint">{{ t('model_hint') }}</p><button type="submit" data-loading-label="{{ t('authorizing') }}">{{ t('authorize') }} <span>↗</span></button><a class="quiet-link" href="{{ url_for('index') }}" data-clear-settings>{{ t('forget_saved') }}</a>
+  </form>
+  <aside class="guide-card"><div class="section-mark">{{ t('beginner') }}</div><h2>{{ t('ready') }}</h2><ol>
+    <li><b>01</b><span>{{ t('step1')|safe }} <a href="https://developer.spotify.com/dashboard" target="_blank" rel="noreferrer">Spotify Developer Dashboard ↗</a></span></li>
+    <li><b>02</b><span>{{ t('step2') }}<code>http://127.0.0.1:5000/callback</code></span></li>
+    <li><b>03</b><span>{{ t('step3') }}</span></li><li><b>04</b><span>{{ t('step4') }} <a href="https://platform.openai.com/api-keys" target="_blank" rel="noreferrer">OpenAI API Keys ↗</a></span></li>
+  </ol><p class="privacy">{{ t('privacy') }}</p></aside>
+</section>
+{% endblock %}

@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="{{ lang }}">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Book Beats{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  </head>
+  <body{% if clear_draft %} data-clear-draft{% endif %}>
+    <header class="site-header"><a class="brand" href="{{ url_for('index') }}"><span>BOOK</span> BEATS <i>●</i></a><p>{{ t('tagline') }}</p><nav class="language"><a class="{% if lang == 'zh' %}active{% endif %}" href="{{ url_for('set_language', lang='zh', next=request.path) }}">中</a><a class="{% if lang == 'en' %}active{% endif %}" href="{{ url_for('set_language', lang='en', next=request.path) }}">EN</a></nav></header>
+    <main>{% block content %}{% endblock %}</main>
+    <footer>BOOK BEATS · {{ t('privacy') }}</footer>
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+  </body>
+</html>

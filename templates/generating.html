@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}{{ t('generating_title', book=run.book_title) }} · Book Beats{% endblock %}
+{% block content %}
+<section class="generating" data-generate-url="{{ url_for('generate') }}" data-preview-url="{{ url_for('preview') }}" data-messages='{{ [t("researching"), t("reading_reviews"), t("shaping_mood"), t("matching_tracks")]|tojson }}'>
+  <div class="sound-orbit" aria-hidden="true"><i></i><i></i><i></i><b>♫</b></div>
+  <div class="eyebrow">BOOK BEATS / IN SESSION</div>
+  <h1>{{ t('generating_title', book=run.book_title) }}</h1>
+  <p class="generation-message" aria-live="polite">{{ t('researching') }}</p>
+  <p class="generation-note">{{ t('generating_note') }}</p>
+  <p class="generation-error" hidden></p><button class="retry-generation" type="button" hidden data-retry-label="Retry generation">↻ Retry / 重新生成</button>
+  <a class="quiet-link" href="{{ url_for('index') }}">{{ t('again') }}</a>
+</section>
+<style>
+  .generating{min-height:620px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;position:relative}.generating h1{font-size:clamp(48px,7vw,88px);max-width:850px}.sound-orbit{width:154px;height:154px;border:1px solid var(--moss-light);border-radius:50%;position:relative;display:grid;place-items:center;margin-bottom:35px;animation:spin 11s linear infinite}.sound-orbit:before,.sound-orbit:after{content:"";position:absolute;border-radius:50%;border:1px dashed rgba(243,234,215,.28)}.sound-orbit:before{inset:17px}.sound-orbit:after{inset:38px}.sound-orbit b{font:44px Fraunces,serif;color:var(--ember);animation:unspin 11s linear infinite}.sound-orbit i{position:absolute;width:8px;height:8px;border-radius:50%;background:var(--ember)}.sound-orbit i:nth-child(1){top:10px;left:42px}.sound-orbit i:nth-child(2){right:14px;bottom:37px;background:var(--moss-light)}.sound-orbit i:nth-child(3){left:20px;bottom:30px;background:var(--paper)}.generation-message{min-height:31px;margin:12px 0;color:var(--moss-light);font:18px "DM Mono",monospace}.generation-note{max-width:430px;color:var(--muted);font-size:13px}.generation-error{max-width:600px;padding:14px 18px;background:rgba(209,93,67,.16);color:#f2b59d;font-size:13px}@keyframes spin{to{transform:rotate(360deg)}}@keyframes unspin{to{transform:rotate(-360deg)}}
+</style>
+{% endblock %}

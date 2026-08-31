@@ -1,4 +1,5 @@
 /book-beats-venv
+.venv/
 .env
 /.idea
 /__pycache__
